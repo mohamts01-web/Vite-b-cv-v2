@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
+import { PayPalScriptProvider } from '@paypal/react-paypal-js';
 import HomePage from './pages/HomePage';
 import ResumeBuilder from './pages/ResumeBuilder';
 import Navigation from './components/shared/Navigation';
@@ -82,9 +83,19 @@ function AppContent() {
 }
 
 function App() {
+  const clientId = import.meta.env.VITE_PAYPAL_CLIENT_ID;
+
   return (
     <BrowserRouter>
-      <AppContent />
+      <PayPalScriptProvider
+        options={{
+          clientId: clientId || 'test',
+          currency: 'USD',
+          intent: 'capture',
+        }}
+      >
+        <AppContent />
+      </PayPalScriptProvider>
     </BrowserRouter>
   );
 }
