@@ -30,9 +30,31 @@ export default function CheckoutPage() {
         payment_method: 'paypal',
       });
 
-      await updateTransactionStatus(transactionId, 'success', {
-        paypal_order_id: orderId,
-      });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
+      const token = (await supabase.auth.getSession()).data?.session?.access_token;
+      if (!token) throw new Error('No session token');
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-paypal-payment`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            orderId,
+            transactionId,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to verify payment');
+      }
 
       setSuccess(true);
       setTimeout(() => {
