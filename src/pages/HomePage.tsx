@@ -1,5 +1,7 @@
-import { FileText, Sparkles, LayoutGrid as Layout, Download, Image, Award, Coins, Shield } from 'lucide-react';
+import { FileText, Sparkles, LayoutGrid as Layout, Download, Image, Award, Coins, Shield, LogOut } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { getCurrentUserProfile, isAdmin } from '../services/creditService';
 
 interface HomePageProps {
@@ -7,6 +9,8 @@ interface HomePageProps {
 }
 
 export default function HomePage({ onNavigate }: HomePageProps) {
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [userAdmin, setUserAdmin] = useState(false);
   const [credits, setCredits] = useState(0);
 
@@ -14,6 +18,15 @@ export default function HomePage({ onNavigate }: HomePageProps) {
     checkAdmin();
     loadCredits();
   }, []);
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  }
 
   async function checkAdmin() {
     const admin = await isAdmin();
@@ -45,28 +58,54 @@ export default function HomePage({ onNavigate }: HomePageProps) {
               </h1>
             </div>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => onNavigate('pricing')}
-                className="px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2"
-              >
-                <Coins className="w-4 h-4" />
-                <span>{credits} Credits</span>
-              </button>
-              {userAdmin && (
-                <button
-                  onClick={() => onNavigate('admin')}
-                  className="px-4 py-2 bg-purple-50 text-purple-700 font-medium rounded-lg hover:bg-purple-100 transition-colors flex items-center gap-2"
-                >
-                  <Shield className="w-4 h-4" />
-                  <span>Admin</span>
-                </button>
+              {user ? (
+                <>
+                  <button
+                    onClick={() => onNavigate('pricing')}
+                    className="px-4 py-2 bg-blue-50 text-blue-700 font-medium rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2"
+                  >
+                    <Coins className="w-4 h-4" />
+                    <span>{credits} Credits</span>
+                  </button>
+                  {userAdmin && (
+                    <button
+                      onClick={() => onNavigate('admin')}
+                      className="px-4 py-2 bg-amber-50 text-amber-700 font-medium rounded-lg hover:bg-amber-100 transition-colors flex items-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" />
+                      <span>Admin</span>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => onNavigate('builder')}
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+                  >
+                    ابدأ الآن
+                  </button>
+                  <button
+                    onClick={handleSignOut}
+                    className="px-4 py-2 bg-red-50 text-red-700 font-medium rounded-lg hover:bg-red-100 transition-colors flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>خروج</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => navigate('/login')}
+                    className="px-6 py-2 text-slate-700 font-medium rounded-lg hover:text-slate-900 transition-colors"
+                  >
+                    دخول
+                  </button>
+                  <button
+                    onClick={() => navigate('/signup')}
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
+                  >
+                    إنشاء حساب
+                  </button>
+                </>
               )}
-              <button
-                onClick={() => onNavigate('builder')}
-                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-medium rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg"
-              >
-                ابدأ الآن
-              </button>
             </div>
           </div>
         </div>

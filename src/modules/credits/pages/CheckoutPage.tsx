@@ -25,15 +25,16 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
 
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+
       const transactionId = await createTransaction({
         ...checkoutData,
         payment_method: 'paypal',
       });
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('Not authenticated');
-
-      const token = (await supabase.auth.getSession()).data?.session?.access_token;
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.access_token;
       if (!token) throw new Error('No session token');
 
       const response = await fetch(
@@ -52,17 +53,22 @@ export default function CheckoutPage() {
       );
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to verify payment');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMsg = errorData.error || `HTTP ${response.status}`;
+        console.error('PayPal verification failed:', errorMsg);
+        throw new Error(errorMsg);
       }
 
+      const responseData = await response.json();
+      console.log('PayPal verification successful:', responseData);
       setSuccess(true);
       setTimeout(() => {
         navigate('/');
       }, 3000);
     } catch (error) {
-      console.error('Error processing PayPal payment:', error);
-      alert('Payment successful but there was an error recording it. Please contact support with order ID: ' + orderId);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('Error processing PayPal payment:', errorMsg);
+      alert(`Payment recorded but verification failed: ${errorMsg}`);
     } finally {
       setLoading(false);
     }

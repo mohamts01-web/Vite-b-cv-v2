@@ -1,8 +1,12 @@
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
+import { AuthProvider } from './context/AuthContext';
 import HomePage from './pages/HomePage';
 import ResumeBuilder from './pages/ResumeBuilder';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import Navigation from './components/shared/Navigation';
 import SocialHome from './modules/social/SocialHome';
 import SocialGenerator from './modules/social/SocialGenerator';
@@ -40,7 +44,10 @@ function AppContent() {
     location.pathname !== '/' &&
     !location.pathname.includes('admin') &&
     location.pathname !== '/pricing' &&
-    location.pathname !== '/checkout';
+    location.pathname !== '/checkout' &&
+    location.pathname !== '/login' &&
+    location.pathname !== '/signup' &&
+    location.pathname !== '/forgot-password';
 
   return (
     <>
@@ -59,6 +66,10 @@ function AppContent() {
       )}
 
       <Routes>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+
         <Route path="/" element={<HomePage onNavigate={handleNavigate} />} />
         <Route path="/builder" element={<ResumeBuilder onNavigate={handleNavigate} />} />
 
@@ -87,15 +98,18 @@ function App() {
 
   return (
     <BrowserRouter>
-      <PayPalScriptProvider
-        options={{
-          clientId: clientId || 'test',
-          currency: 'USD',
-          intent: 'capture',
-        }}
-      >
-        <AppContent />
-      </PayPalScriptProvider>
+      <AuthProvider>
+        <PayPalScriptProvider
+          options={{
+            clientId: clientId || 'test',
+            currency: 'USD',
+            intent: 'capture',
+            components: 'buttons,applepay',
+          }}
+        >
+          <AppContent />
+        </PayPalScriptProvider>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
